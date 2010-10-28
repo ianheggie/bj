@@ -41,7 +41,7 @@ module Fattr
         raise NameError, "bad instance variable name '@#{ name }'" if "@#{ name }" =~ %r/[!?=]$/o
         name = name.to_s
 
-        initialize = b || lambda { default }
+        initialize = b || Proc.new { default }
         initializer = lambda do |this|
           Object.instance_method('instance_eval').bind(this).call &initialize
         end
