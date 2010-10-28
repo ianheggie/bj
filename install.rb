@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 require 'rbconfig'
 require 'find'
-require 'ftools'
+require 'fileutils'
 require 'tempfile'
 include Config
 
