@@ -1,3 +1,4 @@
+require 'logger'
 class Bj
   class Logger < ::Logger
     def self.new *a, &b
