@@ -4,7 +4,7 @@ require 'rake'
 begin
   require 'jeweler'
   Jeweler::Tasks.new do |gem|
-    gem.name = "jk-bj"
+    gem.name = "SciMed-bj"
     gem.summary = %Q{Minor fork of ahoward/bj}
     gem.description = %Q{Forked ahoward/bj because the way the bin/bj before_run method interacts with Main's logger= instance menthod breaks in Ruby 1.8.7. Forked again to add missing 'require logger'}
     gem.email = ["josh.warchol@vibes.com", 'jk@jkraemer.net']
