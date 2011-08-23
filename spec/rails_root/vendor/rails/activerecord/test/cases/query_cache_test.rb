@@ -49,16 +49,20 @@ class QueryCacheTest < ActiveRecord::TestCase
   end
 
   def test_cache_does_not_wrap_string_results_in_arrays
+    require 'sqlite3/version' if current_adapter?(:SQLite3Adapter)
+
     Task.cache do
-      assert_instance_of String, Task.connection.select_value("SELECT count(*) AS count_all FROM tasks")
+      if current_adapter?(:SQLite3Adapter) && SQLite3::Version::VERSION > '1.2.5'
+        assert_instance_of Fixnum, Task.connection.select_value("SELECT count(*) AS count_all FROM tasks")
+      else
+        assert_instance_of String, Task.connection.select_value("SELECT count(*) AS count_all FROM tasks")
+      end
     end
   end
 end
 
-uses_mocha 'QueryCacheExpiryTest' do
-
 class QueryCacheExpiryTest < ActiveRecord::TestCase
-  fixtures :tasks
+  fixtures :tasks, :posts, :categories, :categories_posts
 
   def test_find
     Task.connection.expects(:clear_query_cache).times(1)
@@ -116,11 +120,10 @@ class QueryCacheExpiryTest < ActiveRecord::TestCase
   def test_cache_is_expired_by_habtm_delete
     ActiveRecord::Base.connection.expects(:clear_query_cache).times(2)
     ActiveRecord::Base.cache do
-      c = Category.find(:first)
-      p = Post.find(:first)
+      c = Category.find(1)
+      p = Post.find(1)
+      assert p.categories.any?
       p.categories.delete_all
     end
   end
-end
-
 end
