@@ -94,8 +94,9 @@ class Bj
 
       def key ppid = 0
         ppid ||= 0
-        #"#{ Bj.rails_env }.#{ ppid }.pid"
-        "runner.#{ ppid }.pid"
+        # "#{ Bj.rails_env }.#{ ppid }.pid"
+        # "runner.#{ ppid }.pid"
+        Bj.rails_env
       end
 
       def no_tickle_key 
