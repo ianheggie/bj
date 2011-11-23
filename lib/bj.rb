@@ -56,7 +56,7 @@ unless defined? Bj
   #
   # local 
   #
-    load libdir("stdext.rb")
+    load libdir("stdext.rb") unless defined? Rails
     load libdir("util.rb")
     load libdir("errors.rb")
     load libdir("logger.rb")
