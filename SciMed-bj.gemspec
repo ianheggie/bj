@@ -5,11 +5,11 @@
 
 Gem::Specification.new do |s|
   s.name = %q{SciMed-bj}
-  s.version = "1.2.6"
+  s.version = "1.3.0"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Ara T. Howard", "Joshua Warchol", "Jens Kraemer"]
-  s.date = %q{2011-11-23}
+  s.date = %q{2011-11-29}
   s.default_executable = %q{bj}
   s.description = %q{Forked ahoward/bj because the way the bin/bj before_run method interacts with Main's logger= instance menthod breaks in Ruby 1.8.7. Forked again to add missing 'require logger'}
   s.email = ["josh.warchol@vibes.com", "jk@jkraemer.net"]
