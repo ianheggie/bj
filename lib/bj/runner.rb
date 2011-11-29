@@ -195,51 +195,12 @@ class Bj
                                           :lock => true
                 throw :no_jobs unless job
 
-                job.state = "running"
-                job.save!
-                job.reload
-
                 Bj.logger.info{ "#{ job.title } - starting..." }
-
-                command = job.command
-                env = job.env ? YAML.load(job.env) : {}
-                stdin = job.stdin || ''
-                stdout = job.stdout || ''
-                stderr = job.stderr || ''
-
-                started_at = Time.now
-
-                thread = Util.start command, :cwd=>Bj.rails_root, :env=>env, :stdin=>stdin, :stdout=>stdout, :stderr=>stderr
-
-                job.state = "running"
-                job.runner = Bj.hostname
-                job.pid = thread.pid
-                job.started_at = started_at 
-                job.save!
-                job.reload
               end
 
               job.run!
 
-=begin
-              exit_status = thread.value
-              finished_at = Time.now
-
-              Bj.transaction(options) do
-                job = Bj::Table::Job.find job.id 
-                break unless job
-                job.state = "finished"
-                job.finished_at = finished_at 
-                job.stdout = stdout
-                job.stderr = stderr
-                job.exit_status = exit_status
-                job.save!
-                job.reload
-                Bj.logger.info{ "#{ job.title } - exit_status=#{ job.exit_status }" }
-              end
-=end
-
-                Bj.logger.info{ "#{ job.title } - exit_status=#{ job.exit_status }" }
+              Bj.logger.info{ "#{ job.title } - exit_status=#{ job.exit_status }" }
             end
           end
 
@@ -248,7 +209,7 @@ class Bj
             break if Runner.hup_signaled?
             break if Runner.kill_signaled?
             sleep 1
-          end 
+          end
 
           break unless(limit or limit == false)
           break if Runner.kill_signaled?
@@ -257,7 +218,7 @@ class Bj
 
       def ping_parent
         ppid = options[:ppid]
-        return unless ppid 
+        return unless ppid
         begin
           Process.kill 0, Integer(ppid)
         rescue Errno::ESRCH
