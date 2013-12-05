@@ -90,8 +90,8 @@ class Bj
 # table classes
 #
     class Job < Table
-      set_table_name "bj_job"
-      set_primary_key "#{ table_name }_id"
+      self.table_name "bj_job"
+      self.primary_key "#{ table_name }_id"
 
       migration { 
         define_method :up do
@@ -208,8 +208,8 @@ class Bj
     end
 
     class JobArchive < Job
-      set_table_name "bj_job_archive"
-      set_primary_key "#{ table_name }_id"
+      self.table_name "bj_job_archive"
+      self.primary_key "#{ table_name }_id"
 
       migration {
         define_method(:up) do
@@ -245,8 +245,8 @@ class Bj
     end
 
     class Config < Table
-      set_table_name "bj_config"
-      set_primary_key "#{ table_name }_id"
+      self.table_name "bj_config"
+      self.primary_key "#{ table_name }_id"
 
       migration {
         define_method(:up) do
