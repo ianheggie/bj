@@ -120,7 +120,7 @@ unset BUNDLE_GEMFILE
 if [ -s Gemfile ]
 then
     echo Adding bj as gem to Gemfile...
-    echo "gem 'bj', :path => '$base_dir'" >> Gemfile
+    echo "gem 'SciMed-bj', :path => '$base_dir'" >> Gemfile
 
     case "$RAILS_SERVER" in
     webrick|'')
