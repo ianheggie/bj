@@ -1,0 +1,290 @@
+#!/bin/bash
+
+# Any failure causes exit
+set -e
+
+while :
+do
+    case "$BUNDLE_GEMFILE" in
+    */test/rails_[Qq].gemfile)
+        echo "Aborting..."
+        exit 2
+        ;;
+    */test/rails_edge.gemfile|*/test/rails_[0-9].[0-9]*.gemfile)
+        if [ -f "$BUNDLE_GEMFILE" ]; then
+            break
+        fi
+        ;;
+    esac
+    echo "== SELECT GEMFILE =="
+    echo
+    echo "Please select the gemfile for the required rails series:"
+    (cd test ; ls rails*gemfile | ruby -p -e '$_.sub!(/rails_(.*).gemfile/, "    \\1")' )
+    echo
+    echo -n "Enter choice (or q to quit): "
+    read x
+    export BUNDLE_GEMFILE=$PWD/test/rails_$x.gemfile
+done
+
+rm -rf tmp/Gemfile* tmp/railsapp tmp/bin tmp/gems test/bin test/rails*.gemfile.lock
+
+mkdir -p tmp/gems
+
+. test/init_variables
+
+if $rbenv_which bundle ; then
+  echo Bundler is installed
+else
+  gem install bundler
+  $rehash
+fi
+
+echo "Running bundle --binstubs with BUNDLE_GEMFILE=$BUNDLE_GEMFILE ..."
+if ! bundle --binstubs ; then
+    echo "Test aborted (missing required gems)"
+    exit 2
+fi
+$rehash
+
+rails="$base_dir/test/bin/rails"
+rake="$base_dir/test/bin/rake"
+
+actual_rails_version=`$rails -v`
+
+[ -d lib/bj ] || exec echo setup_railsapp MUST be executed in the base of the bj gem/clone of git repository
+
+echo Installing bj as a gem into tmp/gems
+env GEM_HOME=$tmp_dir/gems rake install
+
+export GEM_PATH="$tmp_dir/gems:`gem environment gempath`"
+echo Set GEM_PATH=$GEM_PATH
+
+echo Gems in tmp/gems:
+ls tmp/gems
+
+echo Environment:
+env | egrep 'TRAVIS|RAILS|RUBY|_ENV|GEM|BUNDLE' || echo "No relevant variables set"
+
+cd $tmp_dir
+
+case `ruby -e 'puts JRUBY_VERSION' 2> /dev/null` in
+    [0-9]*)
+        db=jdbcsqlite3
+        # Appears to need a bit extra time
+        ;;
+    *)
+        db=sqlite3
+        ;;
+esac
+
+echo "Creating $actual_rails_version app in $tmp_dir/railsapp using adapter $db"
+case "$actual_rails_version" in
+    *' '[12].*)
+        $rails railsapp -d $db
+        ;;
+    *' '[34].*)
+        case "$BUNDLE_GEMFILE" in
+        *rails_edge.gemfile)
+            $rails new railsapp -d $db --edge
+            ;;
+        *)
+            $rails new railsapp -d $db
+            ;;
+        esac
+        ;;
+    *)
+        echo "Unknown rails version"
+        ;;
+esac
+
+cd $railsapp
+
+[ -z "$rehash" ] || rbenv local `rbenv version-name`
+
+echo "Changed current directory to railsapp root: $railsapp"
+
+echo "Fixing rdoc require in Rakefile if needed"
+ruby -p -i.bak -e '$_.gsub!(/rake.rdoctask/, "rdoc/task")' Rakefile
+
+echo Adding an initializer for bj gem ...
+mkdir -p config/initializers
+tee config/initializers/bj.rb <<!
+#Bj.setup do |config|
+#  config.pause = 5
+#end
+!
+
+echo Unsetting BUNDLE_GEMFILE '(so Gemfile for rails application will be used)'
+unset BUNDLE_GEMFILE
+
+if [ -s Gemfile ]
+then
+    echo Adding bj as gem to Gemfile...
+    echo "gem 'bj', :path => '$base_dir'" >> Gemfile
+
+    case "$RAILS_SERVER" in
+    webrick|'')
+            echo "Using default webrick server"
+            ;;
+    *)
+            echo "Adding $RAILS_SERVER gem to Gemfile (for use as server)"
+            echo "gem '$RAILS_SERVER'" >> Gemfile
+            ;;
+    esac
+    echo
+    echo running bundle install --binstubs
+    bundle install --binstubs
+    case "$actual_rails_version" in
+    *' '4.*)
+        echo "Running rake rails:update:binstubs to fix up binstubs bundle has overwritten"
+        echo a | rake rails:update:bin
+        ;;
+    esac
+    $rehash
+    echo "Using binstubs in $railsapp/bin for rails and rake commands"
+    rails="$railsapp/bin/rails"
+    rake="$railsapp/bin/rake"
+    # Fix for rvm, otherwise bundle run from rails create fails
+    export PATH="`pwd`/bin:$PATH"
+    echo ================= Gemfile ===================
+    cat Gemfile
+    echo
+else
+    dest=$railsapp/vendor/plugins/bj
+    echo Installing bj as plugin in $dest ...
+    mkdir -p $dest
+    (
+	cd $base_dir
+
+        git ls-files | cpio -pdl $dest
+        
+
+        # use subdir plugin until unified
+	cd $dest/..
+        mv bj/plugin .
+        rm -rf bj
+        mv plugin bj
+        cd ../..
+        ruby vendor/plugins/bj/install.rb
+	cd $dest
+        echo Files installed as plugin:
+        find . -type f
+        echo
+    )
+fi
+
+for e in test ${RAILS_ENV2:-production}
+do
+    if [ -f config/environments/$e.rb ]; then
+      echo ======== config/environments/$e.rb ================
+      sed -i.bak -e 's/config.serve_static_assets = false/config.serve_static_assets = true   # NOTE: bj test: changed to true/'  \
+        -e 's/config.active_record.migration_error = :page_load/# & # NOTE: bj test: commented out/'  \
+        config/environments/$e.rb 
+      cat config/environments/$e.rb || true
+      echo
+    fi
+done
+echo "============== config/environment.rb ============="
+cat config/environment.rb
+echo 
+
+echo STATIC-FILE > public/static.txt
+
+cat > public/example.html <<'EOF'
+    <html>
+    <head>
+      <title>Example for bj</title>
+      <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+    </head>
+    <body>
+      <h1>Background Job (bj)</h1>
+      <ul>
+	<li><a href="http://localhost:3000/bj" target="_blank">Background Job List</a>
+	<li><a href="http://localhost:3000/example/add_job" target="_blank">Add background job</a>
+      </ul>
+    </body>
+    </html>
+EOF
+
+cat > app/controllers/example_controller.rb <<'EOF'
+class ExampleController < ApplicationController
+
+  def index
+    render :text => 'example page'
+  end
+  
+  def add_job
+    Bj.submit '( date && env && echo ALL-IS-WELL ) | tee tmp/bj_add_job_url_worked'
+    render :text => 'added job'
+  end
+
+  def long_job
+    Bj.submit '( echo started && sleep 10 && echo finished ) | tee -a tmp/bj_long_job_url_worked'
+    render :text => 'added job'
+  end
+
+  def catchall
+    render :text => 'catch all route'
+  end
+  
+end
+
+EOF
+
+if [ -s config/routes.rb ]; then
+  mv -f config/routes.rb config/routes.rb-old
+  var=`ruby -n -e 'print $1 if /^[^#]+ do \|([^\|]+)\|/' config/routes.rb-old`
+  (
+    ruby -n -e 'print if not /^end/..9999' config/routes.rb-old | tee /tmp/t$$
+    if [ ! -s /tmp/t$$ ]; then
+      echo "WARNING: ruby -n -e failed silently - using sed instead!! (rbx-19mode has that problem)" >&3
+      sed -e '/^end/,$d' config/routes.rb-old
+    fi
+
+    case "$var" in
+    '')
+      echo "  # -----------------------------------------"
+      echo "  # START OF SECTION FOR TESTING HEALTH_CHECK"
+      echo "  get 'example(/:action(/:id))(.:format)' => 'example'"
+      echo "  if File.exists?('$catchall_file')"
+      echo "    bj_routes"
+      echo "    # CATCH ALL ROUTE"
+      echo "    get '*path' => 'example#catchall'"
+      echo "  end"
+      echo "  # END OF SECTION FOR TESTING HEALTH_CHECK"
+      echo "  # ---------------------------------------"
+      ;;
+    *)
+      echo "  # -----------------------------------------"
+      echo "  # START OF SECTION FOR TESTING HEALTH_CHECK"
+      echo "  # example controller"
+      echo "  ${var}.connect 'example(/:action(/:id))(.:format)', :controller => 'example'"
+      echo "  if File.exists?('$catchall_file')"
+      echo "    # bj routes already at the top in rails 2.3! do not need to call bj_routes"
+      echo "    # CATCH ALL ROUTE"
+      echo "    ${var}.connect '*path', :controller => 'example', :action => 'catchall'"
+      echo "  end"
+      echo "  # END OF SECTION FOR TESTING HEALTH_CHECK"
+      echo "  # ---------------------------------------"
+      ;;
+    esac
+    ruby -n -e 'print if /^end/..9999' config/routes.rb-old | tee /tmp/t$$ 
+    if [ ! -s /tmp/t$$ ]; then
+      echo "WARNING: ruby -n -e failed silently - using sed instead!! (rbx-19mode has that problem)" >&3
+      sed -n -e '/^end/,$p' config/routes.rb-old
+    fi
+  ) 3>&1 > config/routes.rb
+
+  #echo =============== config/routes.rb-old ========================
+  #cat config/routes.rb-old
+  echo =============== config/routes.rb ========================
+  cat config/routes.rb
+else
+  echo NO config/routes.rb file!!
+fi
+echo =======================================
+
+echo
+echo "Created $actual_rails_version app in $railsapp using adapter $db"
+echo -n "Using "
+ruby --version

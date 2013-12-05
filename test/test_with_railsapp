@@ -1,0 +1,234 @@
+#!/bin/bash
+
+# Any failure causes exit
+set -e
+
+case "$1" in
+redo)
+    . test/init_variables
+    cd $railsapp
+    echo Dropping database ...
+    $rake db:drop 
+    case `ruby -e 'puts JRUBY_VERSION' 2> /dev/null` in
+	[0-9]*)
+        echo 'Jruby requires the database to be created before the server is started: running rake db:migrate'
+        $rake db:migrate 
+	;;
+    esac
+    actual_rails_version=`$rails -v`
+    ;;
+*)
+    . test/setup_railsapp
+    ;;
+esac
+
+cd $railsapp
+rm -f $catchall_file
+
+testurl="$base_dir/test/testurl"
+
+server_pid=''
+
+pick_a_port()
+{
+    while :
+    do
+        port=`expr 10000 + $RANDOM`
+        # Check Tcp ports in Listen mode with No address resolution
+        if (netstat -tln | egrep ":${port} .*:"); then
+            echo "(Skipping used port)"
+        else
+            break
+        fi
+    done
+}
+
+
+start_server()
+{
+    # restart migration list
+    rm -rf db/migrate db/schema.rb
+    mkdir -p db/migrate
+
+    # Increment port each time to make sure we have not trouble with address/port already allocated
+    pick_a_port
+    host=http://127.0.0.1:${port}
+    bundle_prefix=''
+    if [ -f Gemfile ]
+    then
+        bundle_prefix='bundle exec'
+    fi
+    server_arg=${RAILS_SERVER:-webrick}
+    case "$server_arg" in
+    puma) 
+        $bundle_prefix puma -b tcp://127.0.0.1:$port &
+        ;;
+    passenger) 
+        $bundle_prefix passenger start -p $port &
+        ;;
+    thin) 
+        $bundle_prefix thin start -p $port &
+        ;;
+    unicorn) 
+        $bundle_prefix unicorn_rails -l 127.0.0.1:$port &
+        ;;
+    *)
+        if [ -x script/server ]
+        then
+            echo Starting server on port $port using $bundle_prefix ./script/server ...
+            $bundle_prefix ./script/server $server_arg -p $port &
+        else
+            echo Starting server on port $port using $rails s ...
+            $bundle_prefix $rails server $server_arg -p $port &
+        fi
+        ;;
+    esac
+    server_pid=$!
+    sleep 3
+    echo
+    echo 'Checking server is up ...'
+    for i in 1 2 3 4 5 6
+    do
+      if $testurl ${host}/static.txt ; then
+        break
+      fi
+      if kill -0 $server_pid ; then
+        echo "waiting ${i} ..."
+      else
+        echo "ERROR: Server has died!!"
+        exit 3
+      fi
+   done
+}
+
+stop_server()
+{
+    case "$server_pid" in
+        [0-9]*)
+            echo ========================================================
+            echo "Killing rails server [pid: $server_pid]"
+            kill -1 $server_pid  || true
+            sleep 2
+            kill -9 $server_pid  || true
+            ;;
+    esac
+    server_pid=''
+    wait
+    sleep 2
+}
+
+finish()
+{
+    set +e
+    echo ========================================================
+    echo TEST ${1:-FAILED}
+    echo ========================================================
+    echo Result of: ls -lR $railsapp/log $railsapp/db
+    ls -lR $railsapp/log $railsapp/db
+
+    if [ -s $railsapp/log/test.log ]
+    then
+        echo ========================================================
+        echo Last 50 lines of test log
+        tail -50 $railsapp/log/test.log
+    fi
+
+    stop_server
+    trap "" 0
+    echo ========================================================
+    echo TEST ${1:-FAILED}
+    echo ========================================================
+    exit ${2:-2}
+}
+
+trap "finish FAILED 1" 0
+
+common_tests()
+{
+
+    mkdir -p tmp
+    rm -f tmp/bj_*
+
+    echo 'CHECKING routes exist...'
+    $rake routes | tee /tmp/t$$
+    echo
+    case `egrep bj /tmp/t$$ || true` in
+    '')
+      echo WARNING - routes for bj not listed!
+      ;;
+    esac
+
+    echo
+    echo 'TESTING can get an example controller ...'
+    $testurl ${host}/example 200 text/html 'example page'
+    echo
+
+    echo
+    echo 'TESTING direct call to catchall method on example controller ...'
+    $testurl ${host}/example/catchall 200 text/html 'catch all route'
+    echo
+
+    echo
+    echo 'TESTING add_job on controller works ...'
+    $testurl ${host}/example/add_job 200 text/html 'added job'
+    echo
+
+    echo
+    echo 'TESTING long_job on controller works ...'
+    $testurl ${host}/example/long_job 200 text/html 'added job'
+    echo
+
+    echo
+    echo 'TESTING long_job on controller works ...'
+    $testurl ${host}/example/long_job 200 text/html 'added job'
+    echo
+
+    ls -l tmp/bj_*
+
+    echo
+    echo 'TESTING commmand on controller works ...'
+    bundle exec bj submit 'date > tmp/bj_manual_ran'
+    echo
+
+    ls -l tmp/bj_*
+}
+
+echo ========================================================
+echo TESTING WITHOUT CATCHALL in test env
+echo ========================================================
+export RAILS_ENV=test RACK_ENV=test
+
+start_server
+
+# get a static file
+
+echo
+echo 'TESTING no catchall route active ...'
+expected_status=404,500,502
+$testurl ${host}/another/url $expected_status
+
+common_tests
+
+echo ========================================================
+echo TESTING WITH CATCHALL in ${RAILS_ENV2:-production} env
+echo ========================================================
+export RAILS_ENV=${RAILS_ENV2:-production} RACK_ENV=${RAILS_ENV2:-production}
+
+date > $catchall_file
+
+stop_server
+start_server
+
+echo
+echo 'TESTING catchall route active ...'
+$testurl ${host}/another/url 200 text/html 'catch all route'
+echo
+
+common_tests
+
+rm -f $catchall_file
+
+finish PASSED 0
+exit 0
+
+# vi: sw=4 ai sm:

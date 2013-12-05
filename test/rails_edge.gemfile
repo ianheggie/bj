@@ -1,0 +1,26 @@
+# Gemfile for testing gem
+
+source 'https://rubygems.org'
+
+# Bundle edge Rails instead:
+
+ruby '1.9.3' if RUBY_VERSION < '1.9.3'
+
+gem 'rails'
+gem 'rake'
+gem 'rack'
+
+group :development, :test do
+  if defined?(JRUBY_VERSION)
+    gem 'jruby-openssl'
+    gem 'activerecord-jdbcsqlite3-adapter'
+  else
+    gem 'sqlite3'
+  end
+  gem 'shoulda'
+end
+
+gem 'main', '>= 2.6.0'
+gem 'systemu', '>= 1.2.0'
+gem 'orderedhash', '>= 0.0.3'
+gem 'jeweler'
