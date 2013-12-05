@@ -1,7 +1,13 @@
 #!/usr/bin/env ruby
+
+if __FILE__ == $0 || $0 =~ /script\/plugin/
+  load File.expand_path(File.join(File.dirname(__FILE__), 'plugin/install.rb'))
+  exit 0
+end
+
 require 'rbconfig'
-require 'find'
 require 'fileutils'
+require 'find'
 require 'tempfile'
 include Config
 

@@ -676,6 +676,12 @@ if RAILS_ROOT and BJ_SCRIPT
 =end
   libdir = File.join(RAILS_ROOT, "vendor", "plugins", "bj", "lib")
   $LOAD_PATH.unshift libdir
+
+  puts "ADDED TO LOAD_PATH"
+else
+  puts "NOT ADDED TO LOAD_PATH"
+  puts "RAILS_ROOT = #{RAILS_ROOT}"
+  puts "BJ_SCRIPT = #{BJ_SCRIPT}"
 end
 #
 # hack of #to_s of STDERR/STDOUT for nice help messages

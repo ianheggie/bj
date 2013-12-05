@@ -109,6 +109,9 @@ ruby -p -i.bak -e '$_.gsub!(/rake.rdoctask/, "rdoc/task")' Rakefile
 echo Adding an initializer for bj gem ...
 mkdir -p config/initializers
 tee config/initializers/bj.rb <<!
+
+require 'bj'
+
 #Bj.setup do |config|
 #  config.pause = 5
 #end
@@ -158,18 +161,18 @@ else
 
         git ls-files | cpio -pdl $dest
         
-
-        # use subdir plugin until unified
-	cd $dest/..
-        mv bj/plugin .
-        rm -rf bj
-        mv plugin bj
-        cd ../..
-        ruby vendor/plugins/bj/install.rb
 	cd $dest
-        echo Files installed as plugin:
+        echo Files installed in plugin dir
         find . -type f
         echo
+
+        echo "Running install script"
+	cd $railsapp
+        date > .install-timestamp
+        ruby vendor/plugins/bj/install.rb
+
+        echo Files installed by plugin
+        find . -type f -newer .install-timestamp
     )
 fi
 
@@ -244,19 +247,19 @@ if [ -s config/routes.rb ]; then
     case "$var" in
     '')
       echo "  # -----------------------------------------"
-      echo "  # START OF SECTION FOR TESTING HEALTH_CHECK"
+      echo "  # START OF SECTION FOR TESTING BJ"
       echo "  get 'example(/:action(/:id))(.:format)' => 'example'"
       echo "  if File.exists?('$catchall_file')"
       echo "    bj_routes"
       echo "    # CATCH ALL ROUTE"
       echo "    get '*path' => 'example#catchall'"
       echo "  end"
-      echo "  # END OF SECTION FOR TESTING HEALTH_CHECK"
+      echo "  # END OF SECTION FOR TESTING BJ"
       echo "  # ---------------------------------------"
       ;;
     *)
       echo "  # -----------------------------------------"
-      echo "  # START OF SECTION FOR TESTING HEALTH_CHECK"
+      echo "  # START OF SECTION FOR TESTING BJ"
       echo "  # example controller"
       echo "  ${var}.connect 'example(/:action(/:id))(.:format)', :controller => 'example'"
       echo "  if File.exists?('$catchall_file')"
@@ -264,7 +267,7 @@ if [ -s config/routes.rb ]; then
       echo "    # CATCH ALL ROUTE"
       echo "    ${var}.connect '*path', :controller => 'example', :action => 'catchall'"
       echo "  end"
-      echo "  # END OF SECTION FOR TESTING HEALTH_CHECK"
+      echo "  # END OF SECTION FOR TESTING BJ"
       echo "  # ---------------------------------------"
       ;;
     esac

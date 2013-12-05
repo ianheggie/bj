@@ -1,4 +1,4 @@
-#! /usr/bin/env ruby
+#!/usr/bin/env ruby
 
 dirname, basename = File.split File.expand_path(__FILE__)
 
