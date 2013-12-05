@@ -1,3 +1,22 @@
+# Suggested by bundler
+*.gem
+*.rbc
+.bundle
+.config
+.yardoc
+Gemfile.lock
+InstalledFiles
+_yardoc
+coverage
+doc/
+lib/bundler/man
+pkg
+rdoc
+spec/reports
+test/tmp
+test/version_tmp
+tmp
+
 # rcov generated
 coverage
 
@@ -13,6 +32,18 @@ doc
 
 # jeweler generated
 pkg
+
+## PROJECT::SPECIFIC
+bin/
+test/bin/
+railsapps/
+test/*.gemfile.lock
+,*
+
+# Local ruby version config
+.rbenv-version
+.ruby-version
+.rvmrc
 
 # Have editor/IDE/OS specific files you need to ignore? Consider using a global gitignore: 
 #
