@@ -223,13 +223,9 @@ class ExampleController < ApplicationController
 
   def long_job
     Bj.submit '( echo started && sleep 10 && echo finished ) | tee -a tmp/bj_long_job_url_worked'
-    render :text => 'added job'
+    render :text => 'added long job'
   end
 
-  def catchall
-    render :text => 'catch all route'
-  end
-  
 end
 
 EOF
@@ -249,11 +245,6 @@ if [ -s config/routes.rb ]; then
       echo "  # -----------------------------------------"
       echo "  # START OF SECTION FOR TESTING BJ"
       echo "  get 'example(/:action(/:id))(.:format)' => 'example'"
-      echo "  if File.exists?('$catchall_file')"
-      echo "    bj_routes"
-      echo "    # CATCH ALL ROUTE"
-      echo "    get '*path' => 'example#catchall'"
-      echo "  end"
       echo "  # END OF SECTION FOR TESTING BJ"
       echo "  # ---------------------------------------"
       ;;
@@ -262,11 +253,6 @@ if [ -s config/routes.rb ]; then
       echo "  # START OF SECTION FOR TESTING BJ"
       echo "  # example controller"
       echo "  ${var}.connect 'example(/:action(/:id))(.:format)', :controller => 'example'"
-      echo "  if File.exists?('$catchall_file')"
-      echo "    # bj routes already at the top in rails 2.3! do not need to call bj_routes"
-      echo "    # CATCH ALL ROUTE"
-      echo "    ${var}.connect '*path', :controller => 'example', :action => 'catchall'"
-      echo "  end"
       echo "  # END OF SECTION FOR TESTING BJ"
       echo "  # ---------------------------------------"
       ;;

@@ -23,7 +23,6 @@ redo)
 esac
 
 cd $railsapp
-rm -f $catchall_file
 
 testurl="$base_dir/test/testurl"
 
@@ -164,23 +163,18 @@ common_tests()
     echo
 
     echo
-    echo 'TESTING direct call to catchall method on example controller ...'
-    $testurl ${host}/example/catchall 200 text/html 'catch all route'
-    echo
-
-    echo
     echo 'TESTING add_job on controller works ...'
     $testurl ${host}/example/add_job 200 text/html 'added job'
     echo
 
     echo
     echo 'TESTING long_job on controller works ...'
-    $testurl ${host}/example/long_job 200 text/html 'added job'
+    $testurl ${host}/example/long_job 200 text/html 'added long job'
     echo
 
     echo
     echo 'TESTING long_job on controller works ...'
-    $testurl ${host}/example/long_job 200 text/html 'added job'
+    $testurl ${host}/example/long_job 200 text/html 'added long job'
     echo
 
     ls -l tmp/bj_*
@@ -194,39 +188,13 @@ common_tests()
 }
 
 echo ========================================================
-echo TESTING WITHOUT CATCHALL in test env
+echo TESTING in test env
 echo ========================================================
 export RAILS_ENV=test RACK_ENV=test
 
 start_server
 
-# get a static file
-
-echo
-echo 'TESTING no catchall route active ...'
-expected_status=404,500,502
-$testurl ${host}/another/url $expected_status
-
 common_tests
-
-echo ========================================================
-echo TESTING WITH CATCHALL in ${RAILS_ENV2:-production} env
-echo ========================================================
-export RAILS_ENV=${RAILS_ENV2:-production} RACK_ENV=${RAILS_ENV2:-production}
-
-date > $catchall_file
-
-stop_server
-start_server
-
-echo
-echo 'TESTING catchall route active ...'
-$testurl ${host}/another/url 200 text/html 'catch all route'
-echo
-
-common_tests
-
-rm -f $catchall_file
 
 finish PASSED 0
 exit 0

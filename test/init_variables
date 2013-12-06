@@ -9,8 +9,6 @@ export RAILS_ENV=test RACK_ENV=test
 base_dir=$PWD
 tmp_dir=$base_dir/tmp
 railsapp=$tmp_dir/railsapp
-catchall_file="$railsapp/tmp/catchall_route.enabled"
-success=successful
 
 rehash=''
 rbenv_which='which'
