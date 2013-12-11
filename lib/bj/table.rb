@@ -91,11 +91,10 @@ class Bj
 #
     class Job < Table
       self.table_name "bj_job"
-      self.primary_key "#{ table_name }_id"
 
       migration { 
         define_method :up do
-          create_table table.table_name, :primary_key => table.primary_key, :force => true do |t|
+          create_table table.table_name, :force => true do |t|
             t.column "command"        , :text
 
             t.column "state"          , :text
@@ -209,11 +208,10 @@ class Bj
 
     class JobArchive < Job
       self.table_name "bj_job_archive"
-      self.primary_key "#{ table_name }_id"
 
       migration {
         define_method(:up) do
-          create_table table.table_name, :primary_key => table.primary_key, :force => true do |t|
+          create_table table.table_name, :force => true do |t|
             t.column "command"        , :text
 
             t.column "state"          , :text
@@ -246,13 +244,12 @@ class Bj
 
     class Config < Table
       self.table_name "bj_config"
-      self.primary_key "#{ table_name }_id"
 
       migration {
         define_method(:up) do
-          create_table table.table_name, :primary_key => table.primary_key, :force => true do |t|
-            t.column "hostname"      , :text
-            t.column "key"           , :text
+          create_table table.table_name, :force => true do |t|
+            t.column "hostname"      , :string
+            t.column "key"           , :string
             t.column "value"         , :text
             t.column "cast"          , :text
           end
@@ -260,7 +257,7 @@ class Bj
           begin
             add_index table.table_name, %w[ hostname key ], :unique => true
           rescue Exception
-            STDERR.puts "WARNING: your database is sucking and does not support unique indexes on text fields!?"
+            STDERR.puts "WARNING: your database does not support unique indexes on string fields, queries will be slower!?"
           end
         end
 
