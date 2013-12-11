@@ -148,14 +148,14 @@ common_tests()
     mkdir -p tmp
     rm -f tmp/bj_*
 
-    echo 'CHECKING routes exist...'
-    $rake routes | tee /tmp/t$$
-    echo
-    case `egrep bj /tmp/t$$ || true` in
-    '')
-      echo WARNING - routes for bj not listed!
-      ;;
-    esac
+    #echo 'CHECKING routes exist...'
+    #$rake routes | tee /tmp/t$$
+    #echo
+    #case `egrep bj /tmp/t$$ || true` in
+    #'')
+    #  echo WARNING - routes for bj not listed!
+    #  ;;
+    #esac
 
     echo
     echo 'TESTING can get an example controller ...'

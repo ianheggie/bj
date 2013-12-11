@@ -134,6 +134,12 @@ then
             echo "gem '$RAILS_SERVER'" >> Gemfile
             ;;
     esac
+    case "$actual_rails_version" in
+    *' '3.[12]*|*' '4.*)
+        echo "Adding therubyracer for js engine"
+        echo "gem 'therubyracer'" | tee -a Gemfile
+        ;;
+    esac
     echo
     echo running bundle install --binstubs
     bundle install --binstubs
@@ -193,7 +199,7 @@ echo
 
 echo STATIC-FILE > public/static.txt
 
-cat > public/example.html <<'EOF'
+cat > public/index.html <<'EOF'
     <html>
     <head>
       <title>Example for bj</title>
@@ -202,8 +208,9 @@ cat > public/example.html <<'EOF'
     <body>
       <h1>Background Job (bj)</h1>
       <ul>
-	<li><a href="http://localhost:3000/bj" target="_blank">Background Job List</a>
-	<li><a href="http://localhost:3000/example/add_job" target="_blank">Add background job</a>
+	<li><a href="http://localhost:3000/example">Example page</a>
+	<li><a href="http://localhost:3000/example/add_job">Add background job</a>
+	<li><a href="http://localhost:3000/example/add_long_job">Add background job that takes 10 seconds</a>
       </ul>
     </body>
     </html>
