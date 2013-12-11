@@ -1,22 +1,27 @@
 #!/usr/bin/env ruby
 
-dirname, basename = File.split File.expand_path(__FILE__)
+dirname = File.dirname(File.expand_path(__FILE__))
 
-libidr = 'lib'
-bindir = 'bin'
+libdir = '../lib'
+bindir = '../bin'
 gem_home = 'gem_home'
 
 rails_root = File.expand_path File.join(dirname, '../../../')
-bj = File.join rails_root, 'script', 'bj'
+puts "RAILS_ROOT THOUGHT TO BE #{rails_root}"
+scriptdir = File.join(rails_root, 'script')
+scriptdir = File.join(rails_root, 'bin') unless File.directory?(scriptdir)
+bj = File.join scriptdir, 'bj'
 
-gems = %w[ attributes arrayfields main systemu orderedhash bj ]
+## bj shouldnt include a second copy of itself
+#gems = %w[ attributes arrayfields main systemu orderedhash bj ]
+gems = %w[ attributes arrayfields main systemu orderedhash ]
 
 # in the plugin dir... 
 Dir.chdir dirname do
   puts "in #{ dirname }..."
 
   # install gems locally
-  puts "installing #{ gems.join ' ' }..."
+  puts "installing #{ gems.join ' ' } to #{gem_home} ..."
   spawn "gem install #{ gems.join ' ' } --install-dir=#{ gem_home } --remote --force --include-dependencies --no-wrappers"
   puts "."
 
@@ -27,7 +32,7 @@ Dir.chdir dirname do
   entries = Dir.glob glob
   entries.each do |entry|
     next if entry =~ %r/-\d+\.\d+\.\d+\.rb$/
-    src, dst = entry, libidr
+    src, dst = entry, libdir
     puts "#{ src } -->> #{ dst }..."
     FileUtils.cp_r src, dst 
     puts "."
@@ -44,22 +49,8 @@ Dir.chdir dirname do
     puts "."
   end
 
-=begin
-  # copy gem_home/bj-x.x.x/bin/bj to rails_root/script/bj
-  glob = File.join gem_home, "gems/bj-*/bin/*"
-  srcs = Dir.glob glob
-  srcs.each do |src|
-    basename = File.basename src
-    dst = File.join rails_root, 'script', basename 
-    puts "#{ src } -->> #{ dst }..."
-    FileUtils.cp_r src, dst
-    File.chmod 0755, dst
-    puts "."
-  end
-=end
-
   # install bin/bj to script/bj
-  src, dst = File.join(bindir, "bj"), File.join(rails_root, "script", "bj") 
+  src, dst = File.join(bindir, "bj"), bj
   puts "#{ src } -->> #{ dst }..."
   FileUtils.cp src, dst
   File.chmod 0755, dst
