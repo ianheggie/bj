@@ -95,7 +95,11 @@ class Bj
       else
         self.table_name "bj_job"
       end
-      self.primary_key "#{ table_name }_id"
+      if self.respond_to? :primary_key=
+        self.primary_key= "#{ table_name }_id"
+      else
+        self.primary_key "#{ table_name }_id"
+      end
 
       migration { 
         define_method :up do
@@ -217,7 +221,11 @@ class Bj
       else
         self.table_name "bj_job_archive"
       end
-      self.primary_key "#{ table_name }_id"
+      if self.respond_to? :primary_key=
+        self.primary_key= "#{ table_name }_id"
+      else
+        self.primary_key "#{ table_name }_id"
+      end
 
       migration {
         define_method(:up) do
@@ -258,7 +266,11 @@ class Bj
       else
         self.table_name "bj_config"
       end
-      self.primary_key "#{ table_name }_id"
+      if self.respond_to? :primary_key=
+        self.primary_key= "#{ table_name }_id"
+      else
+        self.primary_key "#{ table_name }_id"
+      end
 
       migration {
         define_method(:up) do
