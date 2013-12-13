@@ -6,10 +6,10 @@ libdir = '../lib'
 bindir = '../bin'
 gem_home = 'gem_home'
 
-rails_root = File.expand_path File.join(dirname, '../../../')
-puts "RAILS_ROOT THOUGHT TO BE #{rails_root}"
+rails_root = File.expand_path File.join(dirname, '../../../../../')
 scriptdir = File.join(rails_root, 'script')
 scriptdir = File.join(rails_root, 'bin') unless File.directory?(scriptdir)
+FileUtils.mkdir scriptdir unless File.directory?(scriptdir)
 bj = File.join scriptdir, 'bj'
 
 ## bj shouldnt include a second copy of itself

@@ -90,7 +90,11 @@ class Bj
 # table classes
 #
     class Job < Table
-      self.table_name "bj_job"
+      if self.respond_to? :table_name=
+        self.table_name= "bj_job"
+      else
+        self.table_name "bj_job"
+      end
       self.primary_key "#{ table_name }_id"
 
       migration { 
@@ -208,7 +212,11 @@ class Bj
     end
 
     class JobArchive < Job
-      self.table_name "bj_job_archive"
+      if self.respond_to? :table_name=
+        self.table_name= "bj_job_archive"
+      else
+        self.table_name "bj_job_archive"
+      end
       self.primary_key "#{ table_name }_id"
 
       migration {
@@ -245,7 +253,11 @@ class Bj
     end
 
     class Config < Table
-      self.table_name "bj_config"
+      if self.respond_to? :table_name=
+        self.table_name= "bj_config"
+      else
+        self.table_name "bj_config"
+      end
       self.primary_key "#{ table_name }_id"
 
       migration {
