@@ -3,28 +3,11 @@
 # Any failure causes exit
 set -e
 
-while :
-do
-    case "$BUNDLE_GEMFILE" in
-    */test/rails_[Qq].gemfile)
-        echo "Aborting..."
-        exit 2
-        ;;
-    */test/rails_edge.gemfile|*/test/rails_[0-9].[0-9]*.gemfile)
-        if [ -f "$BUNDLE_GEMFILE" ]; then
-            break
-        fi
-        ;;
-    esac
-    echo "== SELECT GEMFILE =="
-    echo
-    echo "Please select the gemfile for the required rails series:"
-    (cd test ; ls rails*gemfile | ruby -p -e '$_.sub!(/rails_(.*).gemfile/, "    \\1")' )
-    echo
-    echo -n "Enter choice (or q to quit): "
-    read x
-    export BUNDLE_GEMFILE=$PWD/test/rails_$x.gemfile
-done
+case "$BUNDLE_GEMFILE" in
+'')
+    export BUNDLE_GEMFILE=$PWD/test/rails_2.3.gemfile
+    ;;
+esac
 
 rm -rf tmp/Gemfile* tmp/railsapp tmp/bin tmp/gems test/bin test/rails*.gemfile.lock
 
@@ -33,10 +16,10 @@ mkdir -p tmp/gems
 . test/init_variables
 
 if $rbenv_which bundle ; then
-  echo Bundler is installed
+    echo Bundler is installed
 else
-  gem install bundler
-  $rehash
+    gem install bundler
+    $rehash
 fi
 
 echo "Running bundle --binstubs with BUNDLE_GEMFILE=$BUNDLE_GEMFILE ..."
@@ -53,14 +36,18 @@ actual_rails_version=`$rails -v`
 
 [ -d lib/bj ] || exec echo setup_railsapp MUST be executed in the base of the bj gem/clone of git repository
 
-echo Installing bj as a gem into tmp/gems
-env GEM_HOME=$tmp_dir/gems rake install
+case "$INSTALL_AS" in
+''|gem*)
+    echo Installing bj as a gem into tmp/gems
+    env GEM_HOME=$tmp_dir/gems rake install
 
-export GEM_PATH="$tmp_dir/gems:`gem environment gempath`"
-echo Set GEM_PATH=$GEM_PATH
+    export GEM_PATH="$tmp_dir/gems:`gem environment gempath`"
+    echo Set GEM_PATH=$GEM_PATH
 
-echo Gems in tmp/gems:
-ls tmp/gems
+    echo Gems in tmp/gems:
+    ls tmp/gems
+    ;;
+esac
 
 echo Environment:
 env | egrep 'TRAVIS|RAILS|RUBY|_ENV|GEM|BUNDLE' || echo "No relevant variables set"
@@ -120,46 +107,14 @@ require 'bj'
 echo Unsetting BUNDLE_GEMFILE '(so Gemfile for rails application will be used)'
 unset BUNDLE_GEMFILE
 
-if [ -s Gemfile ]
-then
-    echo Adding bj as gem to Gemfile...
-    echo "gem 'SciMed-bj', :path => '$base_dir'" >> Gemfile
-
-    case "$RAILS_SERVER" in
-    webrick|'')
-            echo "Using default webrick server"
-            ;;
-    *)
-            echo "Adding $RAILS_SERVER gem to Gemfile (for use as server)"
-            echo "gem '$RAILS_SERVER'" >> Gemfile
-            ;;
-    esac
-    case "$actual_rails_version" in
-    *' '3.[12]*|*' '4.*)
-        echo "Adding therubyracer for js engine"
-        echo "gem 'therubyracer'" | tee -a Gemfile
-        ;;
-    esac
-    echo
-    echo running bundle install --binstubs
-    bundle install --binstubs
-    case "$actual_rails_version" in
-    *' '4.*)
-        echo "Running rake rails:update:binstubs to fix up binstubs bundle has overwritten"
-        echo a | rake rails:update:bin
-        ;;
-    esac
-    $rehash
-    echo "Using binstubs in $railsapp/bin for rails and rake commands"
-
-    rails="$railsapp/bin/rails"
-    rake="$railsapp/bin/rake"
-    # Fix for rvm, otherwise bundle run from rails create fails
-    export PATH="`pwd`/bin:$PATH"
-    echo ================= Gemfile ===================
-    cat Gemfile
-    echo
-else
+case "$INSTALL_AS" in
+''|gem*)
+    echo Adding require bj to config/environment.rb
+    echo "require 'bj'" >> config/environment.rb
+    echo ==== gem list =====
+    gem list
+    ;;
+*)
     dest=$railsapp/vendor/plugins/bj
     echo Installing bj as plugin in $dest ...
     mkdir -p $dest
