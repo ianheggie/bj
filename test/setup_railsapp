@@ -283,8 +283,10 @@ fi
 echo =============== Running bj setup =======================
 if [ -s Gemfile ]
 then
+    echo running: bin/bj setup
     bin/bj setup
 else
+    echo running: ./script/bj setup
     ./script/bj setup
 fi
 
