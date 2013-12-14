@@ -151,6 +151,7 @@ then
     esac
     $rehash
     echo "Using binstubs in $railsapp/bin for rails and rake commands"
+
     rails="$railsapp/bin/rails"
     rake="$railsapp/bin/rake"
     # Fix for rvm, otherwise bundle run from rails create fails
@@ -278,6 +279,15 @@ if [ -s config/routes.rb ]; then
 else
   echo NO config/routes.rb file!!
 fi
+
+echo =============== Running bj setup =======================
+if [ -s Gemfile ]
+then
+    bin/bj setup
+else
+    ./script/bj setup
+fi
+
 echo =======================================
 
 echo
