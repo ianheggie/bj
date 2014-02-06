@@ -3,6 +3,7 @@ class Bj
 # table base class
 #
   class Table < ActiveRecord::Base
+    self.abstract_class = true
     module ClassMethods
       fattr("list"){ Array.new }
       fattr("migration"){}
