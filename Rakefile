@@ -6,7 +6,7 @@ task :default => :test
 desc "Run all the tests"
 task :test do
   Dir.chdir('spec/rails_root') do
-    system "bundle"
-    system "bacon ../bj.rb"
+    sh "bundle"
+    sh "bacon ../bj.rb"
   end
 end
