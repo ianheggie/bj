@@ -1,0 +1,16 @@
+
+/.ruby-version
+Gemfile.lock
+
+# editor temp files
+*.swp
+*~
+
+# packaging
+/pkg
+/bj-1.*.*
+
+# test artifacts
+spec/rails_root
+
+.bundle
