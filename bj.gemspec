@@ -19,6 +19,7 @@ Gem::Specification::new do |spec|
   spec.add_dependency 'main', '>= 2.6.0'
   spec.add_dependency 'systemu', '>= 1.2.0'
   spec.add_dependency 'orderedhash', '>= 0.0.3'
+  spec.add_development_dependency 'rake', '>= 0.9.6'
   spec.add_development_dependency 'bacon', '>= 1.2.0'
 
   spec.extensions << "extconf.rb" if File::exists? "extconf.rb"

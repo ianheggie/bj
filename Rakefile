@@ -5,5 +5,8 @@ task :default => :test
 
 desc "Run all the tests"
 task :test do
-  system "bacon -w -Ilib --automatic --quiet"
+  Dir.chdir('spec/rails_root') do
+    system "bundle"
+    system "bacon ../bj.rb"
+  end
 end
