@@ -9,4 +9,10 @@ gem "rails", '~> 2.1.0'
 gem 'sqlite3'
 gem 'rdoc'
 
-gem 'bacon', :group => 'test'
+group 'test' do
+  gem 'bacon'
+  gem 'main', '>= 2.6.0'
+  gem 'systemu', '>= 1.2.0'
+  gem 'orderedhash', '>= 0.0.3'
+  gem 'rake', '>= 0.9.6'
+end

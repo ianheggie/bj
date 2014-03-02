@@ -15,5 +15,7 @@ Gemfile.lock
 # test artifacts
 
 spec/rails_root/vendor/plugins/bj/*
+spec/rails_root/bin
+spec/rails_root/log/development.log
 
 
